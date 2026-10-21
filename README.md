@@ -1,4 +1,6 @@
-# US record temperatures
+# howhigh
+
+**How often are US weather stations setting record highs, compared with record lows?**
 
 A data pipeline (and, eventually, a web app) tracking how often US weather stations set record
 high temperatures compared with record lows, from 1950 to today.
