@@ -1,5 +1,7 @@
 # howhigh
 
+[![tests](https://github.com/vajdaij/howhigh/actions/workflows/tests.yml/badge.svg)](https://github.com/vajdaij/howhigh/actions/workflows/tests.yml)
+
 **How often are US weather stations setting record highs, compared with record lows?**
 
 A data pipeline (and, eventually, a web app) tracking how often US weather stations set record
@@ -48,6 +50,24 @@ The defaults can be changed with command-line flags. Run `python ghcn_records.py
 pip install -r requirements.txt
 python test_ghcn_records.py     # self-checks on synthetic data, no network needed
 ```
+
+The self-checks also run automatically on GitHub for every push and pull request.
+
+### Smoke test before a full run
+
+A full run downloads hundreds of station files. Try the whole pipeline on a handful
+first:
+
+```
+python ghcn_records.py select --limit 5 --also USC00050848
+python ghcn_records.py download
+python ghcn_records.py detect
+python ghcn_records.py summarize
+```
+
+`--limit 5` keeps five stations spread across different states, and `--also` adds specific
+stations (here Boulder, CO), which is handy for spot-checking against published local records.
+Run `select` again without `--limit` for the full set.
 
 ## Outputs
 

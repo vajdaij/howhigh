@@ -7,6 +7,9 @@ Record-temperature pipeline, stages 1-3 (plus a checkpoint summary).
     detect     Walk each station's history and emit record-high / record-low events
     summarize  Decade and year ratios of record highs to record lows (checkpoint)
 
+Smoke test first (5 stations spread across states, plus Boulder):
+    python ghcn_records.py select --limit 5 --also USC00050848
+
 Typical run:
     python ghcn_records.py select
     python ghcn_records.py download --workers 8
@@ -162,6 +165,24 @@ def select_stations(stations: pd.DataFrame, inventory: pd.DataFrame, *,
     return sel.merge(span, on="station").sort_values("station").reset_index(drop=True)
 
 
+def sample_stations(sel: pd.DataFrame, limit: int, also: list[str] | None = None) -> pd.DataFrame:
+    """Pick `limit` stations spread evenly across states (deterministic), plus any
+    station IDs in `also`. Used for quick smoke tests before a full run."""
+    also = [s.strip() for s in (also or []) if s.strip()]
+    missing = sorted(set(also) - set(sel["station"]))
+    if missing:
+        log.warning("--also stations not in the selection (skipped): %s", ", ".join(missing))
+    forced = sel[sel["station"].isin(also)]
+    pool = sel[~sel["station"].isin(also)].sort_values(["state", "station"]).reset_index(drop=True)
+    n = max(0, min(limit - len(forced), len(pool)))
+    if n:
+        idx = np.unique(np.linspace(0, len(pool) - 1, n).round().astype(int))
+        pool = pool.iloc[idx]
+    else:
+        pool = pool.iloc[0:0]
+    return pd.concat([forced, pool]).sort_values("station").reset_index(drop=True)
+
+
 def cmd_select(args) -> None:
     meta = Path(args.data_dir) / "meta"
     meta.mkdir(parents=True, exist_ok=True)
@@ -179,10 +200,16 @@ def cmd_select(args) -> None:
     sel = select_stations(stations, inventory, first_year_by=first_by,
                           last_year_at_least=args.count_end,
                           conus_only=not args.include_non_conus)
+    log.info("%d stations have TMAX+TMIN from <=%d to >=%d",
+             len(sel), first_by, args.count_end)
+    if args.limit:
+        also = args.also.split(",") if args.also else []
+        sel = sample_stations(sel, args.limit, also)
+        log.info("Smoke-test mode: kept %d stations (%s)", len(sel),
+                 ", ".join(sel["station"]))
     out = Path(args.data_dir) / "selected_stations.csv"
     sel.to_csv(out, index=False)
-    log.info("Selected %d stations with TMAX+TMIN from <=%d to >=%d -> %s",
-             len(sel), first_by, args.count_end, out)
+    log.info("Wrote %d stations -> %s", len(sel), out)
 
 
 # ----------------------------------------------------------------------------
@@ -462,6 +489,11 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--include-non-conus", action="store_true",
                    help="keep AK, HI and territories (default: lower 48 only)")
     s.add_argument("--refresh", action="store_true", help="re-download metadata")
+    s.add_argument("--limit", type=int, default=0,
+                   help="smoke test: keep only N stations, spread across states")
+    s.add_argument("--also", default="",
+                   help="comma-separated station IDs to always keep with --limit "
+                        "(e.g. USC00050848 for Boulder)")
 
     d = sub.add_parser("download", help="fetch per-station daily files")
     d.add_argument("--station-url", default=STATION_URL,

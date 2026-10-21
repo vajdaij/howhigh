@@ -127,6 +127,19 @@ def test_metadata_parsing_and_selection(tmp: Path):
     assert sorted(sel["station"]) == ["USC00050848", "USW00094728"], sel
 
 
+def test_sample_stations_for_smoke_tests():
+    states = ["AZ"] * 10 + ["CO"] * 10 + ["KS"] * 10 + ["NY"] * 10
+    sel = pd.DataFrame({"station": [f"USC{i:08d}" for i in range(40)], "state": states})
+    picked = gr.sample_stations(sel, 4)
+    assert len(picked) == 4
+    assert set(picked["state"]) == {"AZ", "CO", "KS", "NY"}   # spread, not clustered
+    assert picked.equals(gr.sample_stations(sel, 4))          # deterministic
+    # --also stations are always kept and count toward the limit
+    picked = gr.sample_stations(sel, 3, ["USC00000015", "NOT_A_STATION"])
+    assert len(picked) == 3 and "USC00000015" in set(picked["station"])
+    assert len(gr.sample_stations(sel, 100)) == 40            # limit larger than list
+
+
 # ---------------------------------------------------------------- end-to-end
 def test_end_to_end_synthetic(tmp: Path):
     """Two synthetic climates through detect + summarize:
