@@ -61,3 +61,8 @@ Everything is written to `out/` (git-ignored):
 Data: NOAA National Centers for Environmental Information, Global Historical Climatology
 Network – Daily. The outputs here are derived from NOAA data and are not original, unaltered
 NOAA data.
+
+## License
+
+Code is released under the [BSD 3-Clause License](LICENSE). NOAA data is public and is not
+covered by this license.
