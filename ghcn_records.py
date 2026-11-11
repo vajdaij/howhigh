@@ -7,8 +7,8 @@ Record-temperature pipeline, stages 1-3 (plus a checkpoint summary).
     detect     Walk each station's history and emit record-high / record-low events
     summarize  Decade and year ratios of record highs to record lows (checkpoint)
 
-Smoke test first (5 stations spread across states, plus Boulder):
-    python ghcn_records.py select --limit 5 --also USC00050848
+Smoke test first (5 stations spread across states, plus Norman):
+    python ghcn_records.py select --limit 5 --also USC00346386
 
 Typical run:
     python ghcn_records.py select
@@ -493,7 +493,7 @@ def build_parser() -> argparse.ArgumentParser:
                    help="smoke test: keep only N stations, spread across states")
     s.add_argument("--also", default="",
                    help="comma-separated station IDs to always keep with --limit "
-                        "(e.g. USC00050848 for Boulder)")
+                        "(e.g. USC00346386 for Norman)")
 
     d = sub.add_parser("download", help="fetch per-station daily files")
     d.add_argument("--station-url", default=STATION_URL,

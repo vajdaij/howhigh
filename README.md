@@ -63,25 +63,25 @@ from a quick run to the full analysis.
 A full run downloads hundreds of station files. Try the whole pipeline on a handful first:
 
 ```
-python ghcn_records.py select --limit 5 --also USC00050848
+python ghcn_records.py select --limit 5 --also USC00346386
 python ghcn_records.py download
 python ghcn_records.py detect
 python ghcn_records.py summarize
 ```
 
 `--limit 5` keeps five stations spread across different states, and `--also` adds specific
-stations (here Boulder, CO). Every stage should finish without errors, and `detect` should
+stations (here Norman, OK). Every stage should finish without errors, and `detect` should
 report that most of the stations passed QC. If one didn't, `out/station_qc.csv` says why.
 
 ### 2. Spot-check one station
 
-Print Boulder's most recent record highs in °F:
+Print Norman's most recent record highs in °F:
 
 ```
-python -c "import pandas as pd; e = pd.read_parquet('out/events/USC00050848.parquet'); h = e[e.type == 'high_max'].copy(); h['temp_f'] = (h.value_c10 / 10 * 9 / 5 + 32).round(); print(h[['date', 'temp_f', 'is_tie']].tail(15))"
+python -c "import pandas as pd; e = pd.read_parquet('out/events/USC00346386.parquet'); h = e[e.type == 'high_max'].copy(); h['temp_f'] = (h.value_c10 / 10 * 9 / 5 + 32).round(); print(h[['date', 'temp_f', 'is_tie']].tail(15))"
 ```
 
-Compare a few of them with the National Weather Service's published daily records for Boulder
+Compare a few of them with the National Weather Service's published daily records for Norman
 (NOWData on weather.gov). Most should match. Some differences are expected, since NWS sometimes
 merges several nearby stations into one city record and this pipeline treats each station
 separately. NOAA stores whole tenths of °C, so a reading can also be off by 1°F after converting.
